@@ -14,17 +14,19 @@ class MetricsListApiView(ListAPIView):
     model = Metric
     permission_classes = [IsAuthenticated, ]
     filterset_class = MetricFilter
-    ordering_fields = ('channel', 'country', 'os', 'date', 'impressions', 'clicks', 'installs', 'spend', 'revenue',
-                       'cpi')
+    ordering_fields = ('channel', 'country', 'os', 'date', 'impressions', 'clicks', 'installs', 'spend',
+                       'revenue', 'cpi')
 
     def get(self, request, *args, **kwargs):
         grouping = self.get_grouping()
         if not grouping:
-            return super().get(request, *args, **kwargs)
+            return super().get(request, *args, **kwargs)  # return the usual response if grouping not requested
 
+        #  filter the queryset first before aggregating
         _filter = MetricFilter(self.request.GET, queryset=self.get_queryset())
         queryset = _filter.qs
 
+        # annotate queryset with group by fields
         qs = queryset.values(*grouping).annotate(
             impressions=Sum('impressions'),
             clicks=Sum('clicks'),
@@ -37,8 +39,10 @@ class MetricsListApiView(ListAPIView):
             )
         )
 
+        # order the resulting queryset
         qs = OrderingFilter().filter_queryset(request=self.request, queryset=qs, view=self)
 
+        # paginate if need be
         page = self.paginate_queryset(qs)
         if page is not None:
             serializer = self.get_serializer(page, many=True)
