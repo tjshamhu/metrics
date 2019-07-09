@@ -9,5 +9,5 @@ class Metric(models.Model):
     impressions = models.IntegerField()
     clicks = models.IntegerField()
     installs = models.IntegerField()
-    spend = models.IntegerField()
-    revenue = models.FloatField()
+    spend = models.DecimalField(decimal_places=1, max_digits=8)
+    revenue = models.DecimalField(decimal_places=2, max_digits=8)

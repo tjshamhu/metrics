@@ -38,11 +38,15 @@ DJANGO_APPS = [
     'django.contrib.staticfiles',
 ]
 
-CUSTOM_APPS = [
-    'metrics'
+THIRD_PARTY_APPS = [
+    'rest_framework'
 ]
 
-INSTALLED_APPS = DJANGO_APPS + CUSTOM_APPS
+CUSTOM_APPS = [
+    'metrics',
+]
+
+INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + CUSTOM_APPS
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
