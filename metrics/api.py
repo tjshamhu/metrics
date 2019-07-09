@@ -1,4 +1,4 @@
-from django.db.models import Sum
+from django.db.models import Sum, DecimalField, F, ExpressionWrapper
 from rest_framework.generics import ListAPIView
 from rest_framework.permissions import IsAuthenticated
 
@@ -12,7 +12,8 @@ class MetricsListApiView(ListAPIView):
     model = Metric
     permission_classes = [IsAuthenticated, ]
     filterset_class = MetricFilter
-    ordering_fields = ('channel', 'country', 'os', 'date', 'impressions', 'clicks', 'installs', 'spend', 'revenue')
+    ordering_fields = ('channel', 'country', 'os', 'date', 'impressions', 'clicks', 'installs', 'spend', 'revenue',
+                       'cpi')
 
     def get(self, request, *args, **kwargs):
         grouping = self.get_grouping()
@@ -27,7 +28,11 @@ class MetricsListApiView(ListAPIView):
             Sum('clicks'),
             Sum('installs'),
             Sum('spend'),
-            Sum('revenue')
+            Sum('revenue'),
+            cpi=ExpressionWrapper(
+                F('spend__sum') / F('installs__sum'),
+                output_field=DecimalField(decimal_places=2, max_digits=20)
+            )
         )
 
         page = self.paginate_queryset(qs)
@@ -40,7 +45,13 @@ class MetricsListApiView(ListAPIView):
         return GroupedMetricSerializer if grouping else MetricSerializer
 
     def get_queryset(self):
-        return self.model.objects.all()
+        queryset = self.model.objects.annotate(
+            cpi=ExpressionWrapper(
+                F('spend') / F('installs'),
+                output_field=DecimalField(decimal_places=2)
+            )
+        )
+        return queryset
 
     def get_grouping(self):
         params = self.request.query_params.get('grouping', None)
