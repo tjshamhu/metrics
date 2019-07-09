@@ -1,10 +1,10 @@
 from django.urls import re_path
 from metrics.api import MetricsListApiView
 
-app_name = 'artists'
+app_name = 'metrics'
 
 urlpatterns = [
-    re_path('^metrics/$', MetricsListApiView.as_view(), name='metrics-list')
+    re_path('^$', MetricsListApiView.as_view(), name='metrics-list')
 ]
 
 

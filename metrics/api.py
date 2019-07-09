@@ -1,6 +1,8 @@
 from django.db.models import Sum, DecimalField, F, ExpressionWrapper
+from rest_framework.filters import OrderingFilter
 from rest_framework.generics import ListAPIView
 from rest_framework.permissions import IsAuthenticated
+
 
 from metrics.filters import MetricFilter
 from metrics.models import Metric
@@ -24,16 +26,18 @@ class MetricsListApiView(ListAPIView):
         queryset = _filter.qs
 
         qs = queryset.values(*grouping).annotate(
-            Sum('impressions'),
-            Sum('clicks'),
-            Sum('installs'),
-            Sum('spend'),
-            Sum('revenue'),
+            impressions=Sum('impressions'),
+            clicks=Sum('clicks'),
+            installs=Sum('installs'),
+            spend=Sum('spend'),
+            revenue=Sum('revenue'),
             cpi=ExpressionWrapper(
-                F('spend__sum') / F('installs__sum'),
+                F('spend') / F('installs'),
                 output_field=DecimalField(decimal_places=2, max_digits=20)
             )
         )
+
+        qs = OrderingFilter().filter_queryset(request=self.request, queryset=qs, view=self)
 
         page = self.paginate_queryset(qs)
         if page is not None:
